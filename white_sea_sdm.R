@@ -209,7 +209,7 @@
 library(dismo)
 library(sdmpredictors)
 library(usdm)
-# first to determone the extent
+# first to determine the extent
 xs <- c(32, 45)
 ys <- c(63.5, 67)
 e = extent( xs , ys)
