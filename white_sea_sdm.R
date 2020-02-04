@@ -1,6 +1,6 @@
 #clearence and libraries
 
-# rm(list = ls())
+ rm(list = ls())
 # library(sdmpredictors)
 # library(rgbif)
 # library(maps)
@@ -366,20 +366,31 @@ barplot(vi_LH@varImportance$AUCtest, names = vi_LH@variables, las = 2, cex.names
 abline(h = 0.005, lty = 2)
 ###checking out all layers
 library(usdm)
+length(lays$layer_code)
+# xs <- list()
+# for (l in seq_along(lays$layer_code)){
+#     x <- load_layers(lays$layer_code[l], datadir = tempdir())
+#     xs[l] <- x
+#     print(l)
+# }
+# x <- load_layers(lays$layer_code[1], datadir = tempdir())
+# save(xs, file = 'xs.rda')
+load('xs.rda')
+table(sapply(xs, length))
+sho <- which(sapply(xs, length) == 8786880)
+sapply(xs[sho], names)
 
-x <- load_layers(lays$layer_code, datadir = tempdir())
+xs_long <- xs[-sho]
+xs <- c(32, 45)
+ys <- c(63.5, 67)
 e <- extent(xs, ys)
-whiteSea <- crop(x, e)
-names(whiteSea) <- lays$name
+whiteSea <- crop(stack(xs_long), e)
+
+# save(whiteSea, file = 'whiteSea.rda')
+names(whiteSea) <- lays$name[-sho]
 plot(whiteSea)
 
-e <- extent(xs, ys)
-whiteSea <- crop(x, e)
-names(whiteSea) <- marspec_layers$name[diap]
-
-
-v1 <- vifstep(lays)
-v2 <- vifcor(whiteSea, th = 0.9)
+v_all <- vifcor(whiteSea, th = 0.9)
 
 biom <- exclude(whiteSea, vif = v2)
 plot(biom)
@@ -388,3 +399,31 @@ sdm::niche(x = whiteSea,
            h = d_CL,
            n = d_CL@features.name[1:2],
            plot = F)
+
+
+#uncertaincy measures sunig usdm
+library(usdm)
+vifs <- usdm::vifcor(whiteSea, th = 0.6)
+excl <- exclude(whiteSea,vifs)
+plot(excl[[1:6]])
+plot(excl[[7:12]])
+plot(excl[[12:18]])
+
+
+#custom way
+
+preds <- whiteSea@data@values
+str(preds)
+preds <- preds[complete.cases(preds),]
+
+pca <- prcomp(preds, center = T, scale = T)
+# factoextra::fviz_pca_biplot(pca, label = 'var',col.var = 'cos2', pointsize = 0.1, cex.labels = 0.15)
+factoextra::fviz_pca_biplot(pca, axes = c(1,2), label = 'var',col.var = 'cos2', pointsize = 0.1, cex.labels = 0.15)
+factoextra::fviz_pca_biplot(pca, axes = c(1,3), label = 'var',col.var = 'cos2', pointsize = 0.1, cex.labels = 0.15)
+factoextra::fviz_eig(pca)
+
+#cor
+cor <- cor(preds)
+colnames(cor) <- 1:42 -> rownames(cor)
+
+corrplot::corrplot(cor, tl.cex = 0.4)
